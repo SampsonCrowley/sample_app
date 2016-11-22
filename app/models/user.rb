@@ -2,7 +2,7 @@ class User < ApplicationRecord
   attr_accessor :password_confirmation
   before_save do
     email.downcase!
-    self.password = SCrypt::Password.create(password)
+    self.password = User.digest(password)
   end
 
   validates :name,  presence: true, length: { maximum: 50 }
@@ -14,5 +14,10 @@ class User < ApplicationRecord
   validates :password, presence: true, length: { minimum: 8 }
   validate do
     errors.add(:password, "passwords must match") if password != password_confirmation
+  end
+
+  def User.digest(pass)
+    SCrypt::Engine.calibrate!(max_mem: 16 * 1024 * 1024, key_len: 256)
+    SCrypt::Password.create(pass)
   end
 end
